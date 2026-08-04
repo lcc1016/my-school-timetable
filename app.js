@@ -57,8 +57,8 @@ function logout() {
     scheduleData = [];
     homeroomData = {};
     navHistory   = [];
-    document.getElementById('loginPassword').value = '';
-    document.getElementById('loginError').textContent = '';
+    const errEl  = document.getElementById('loginError');
+    if (errEl) errEl.textContent = '';
     showView('loginView');
 }
 
@@ -106,27 +106,26 @@ function populateSemesterSelect() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   登入
+   登入查詢 (簡化版：無須帳號密碼，直接讀取)
 ═══════════════════════════════════════════════════════════ */
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const errEl    = document.getElementById('loginError');
-    const btn      = document.getElementById('loginBtn');
-    const spinner  = document.getElementById('loginSpinner');
+    const errEl   = document.getElementById('loginError');
+    const btn     = document.getElementById('loginBtn');
+    const spinner = document.getElementById('loginSpinner');
 
-    errEl.textContent = '';
+    if (errEl) errEl.textContent = '';
+    if (btn) btn.disabled = true;
+    if (spinner) spinner.classList.add('show');
 
-    if (username === CONFIG.USERNAME && password === CONFIG.PASSWORD) {
-        btn.disabled = true;
-        if (spinner) spinner.classList.add('show');
+    try {
         const semLabel = document.getElementById('semesterSelect')?.value || '';
         await fetchAndParseCSV(semLabel);
-        btn.disabled = false;
+    } catch (err) {
+        if (errEl) errEl.textContent = '載入失敗，請確認課表檔案是否存在。';
+    } finally {
+        if (btn) btn.disabled = false;
         if (spinner) spinner.classList.remove('show');
-    } else {
-        errEl.textContent = '帳號或密碼錯誤，請再試一次';
     }
 });
 
@@ -244,7 +243,7 @@ function buildCategories() {
     
     [...allClasses].sort().forEach(cls => {
         const firstChar = cls.charAt(0);
-        // 重點修正：只要是 7、8、9 開頭（如 701, 810, 912 或 七年1班）皆歸入對應年級
+        // 只要是 7、8、9 開頭（如 701, 810, 912 或 七年1班）皆歸入對應年級
         if (firstChar === '7' || cls.startsWith('七')) {
             classGroups['七年級'].push(cls);
         } else if (firstChar === '8' || cls.startsWith('八')) {
@@ -573,24 +572,3 @@ document.addEventListener('DOMContentLoaded', () => {
     updateBackBtn();
     showView('loginView');
 });
-
-/* ═══════════════════════════════════════════════════════════
-   訪客登入
-═══════════════════════════════════════════════════════════ */
-async function guestLogin() {
-    const errEl    = document.getElementById('loginError');
-    const btn      = document.getElementById('guestBtn');
-    
-    if (errEl) errEl.textContent = '';
-    if (btn) btn.disabled = true;
-    
-    const semLabel = document.getElementById('semesterSelect')?.value || '';
-    
-    try {
-        await fetchAndParseCSV(semLabel);
-    } catch(err) {
-        if (errEl) errEl.textContent = '載入失敗，請確認資料檔是否存在。';
-    } finally {
-        if (btn) btn.disabled = false;
-    }
-}
