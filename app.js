@@ -113,13 +113,27 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const errEl   = document.getElementById('loginError');
     const btn     = document.getElementById('loginBtn');
     const spinner = document.getElementById('loginSpinner');
+    const semSelect = document.getElementById('semesterSelect');
 
     if (errEl) errEl.textContent = '';
+
+    // 安全取得選取的學期（如果選單還沒載入，自動抓 CONFIG 裡的第一個 key）
+    let semLabel = '';
+    if (semSelect && semSelect.options && semSelect.options.length > 0) {
+        semLabel = semSelect.value;
+    } else if (typeof CONFIG !== 'undefined' && CONFIG.SEMESTERS) {
+        semLabel = Object.keys(CONFIG.SEMESTERS)[0] || '';
+    }
+
+    if (!semLabel) {
+        if (errEl) errEl.textContent = '請先選擇學期或確認 config.js 設定';
+        return;
+    }
+
     if (btn) btn.disabled = true;
     if (spinner) spinner.classList.add('show');
 
     try {
-        const semLabel = document.getElementById('semesterSelect')?.value || '';
         await fetchAndParseCSV(semLabel);
     } catch (err) {
         if (errEl) errEl.textContent = '載入失敗，請確認課表檔案是否存在。';
